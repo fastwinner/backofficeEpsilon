@@ -1,0 +1,96 @@
+/* Import Google Fonts as fallback for AmpleSoft Pro */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+
+body {
+  margin: 0;
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #F9FBF9;
+  color: #0B442D;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Note: Pour utiliser AmpleSoft Pro, placez les fichiers de police dans src/assets/fonts/ et décommentez les @font-face ci-dessous */
+/*
+@font-face {
+  font-family: 'AmpleSoft Pro';
+  src: url('./assets/fonts/AmpleSoftPro-Regular.woff2') format('woff2'),
+       url('./assets/fonts/AmpleSoftPro-Regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'AmpleSoft Pro';
+  src: url('./assets/fonts/AmpleSoftPro-Medium.woff2') format('woff2'),
+       url('./assets/fonts/AmpleSoftPro-Medium.woff') format('woff');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'AmpleSoft Pro';
+  src: url('./assets/fonts/AmpleSoftPro-SemiBold.woff2') format('woff2'),
+       url('./assets/fonts/AmpleSoftPro-SemiBold.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'AmpleSoft Pro';
+  src: url('./assets/fonts/AmpleSoftPro-Bold.woff2') format('woff2'),
+       url('./assets/fonts/AmpleSoftPro-Bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+*/
+
+/* Epsilon brand colors as CSS Variables pour les couleurs Epsilon */
+:root {
+  --epsilon-green: #0B442D;
+  --epsilon-green-light: #2D6B4F;
+  --epsilon-green-dark: #051F16;
+  --epsilon-white: #F9FBF9;
+  --epsilon-yellow: #FAB73C;
+  --epsilon-yellow-light: #FCC866;
+  --epsilon-yellow-dark: #E09B1A;
+  --epsilon-orange: #EC681C;
+  --epsilon-orange-light: #F08A4A;
+  --epsilon-orange-dark: #C54D0F;
+  
+  /* Couleurs sémantiques */
+  --color-success: var(--epsilon-green);
+  --color-warning: var(--epsilon-yellow);
+  --color-error: var(--epsilon-orange);
+  --color-info: var(--epsilon-green-light);
+  
+  /* Backgrounds et surfaces */
+  --bg-primary: var(--epsilon-white);
+  --bg-secondary: #FFFFFF;
+  --bg-accent: rgba(11, 68, 45, 0.04);
+  
+  /* Borders et dividers */
+  --border-light: rgba(11, 68, 45, 0.08);
+  --border-medium: rgba(11, 68, 45, 0.12);
+  --border-strong: rgba(11, 68, 45, 0.2);
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(11, 68, 45, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(11, 68, 45, 0.1), 0 2px 4px -1px rgba(11, 68, 45, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(11, 68, 45, 0.1), 0 4px 6px -2px rgba(11, 68, 45, 0.05);
+}
