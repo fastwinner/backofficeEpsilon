@@ -3,7 +3,7 @@ import { Card, CardContent, Typography, Box, useTheme } from '@mui/material';
 import { TrendingUp, TrendingDown } from '@mui/icons-material';
 
 function StatCard({ title, value, icon, color, trend }) {
-  const theme = useTheme();
+  // const theme = useTheme();
   
   return (
     <Card 
