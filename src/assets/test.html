@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation API - Plateforme de Cours</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f8f9fa;
+            padding: 0;
+        }
+
+        .document {
+            max-width: 210mm;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            min-height: 297mm;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .toc {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 40px;
+            border-left: 4px solid #667eea;
+        }
+
+        .toc h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        .toc ul {
+            list-style: none;
+        }
+
+        .toc li {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+
+        .toc a {
+            color: #333;
+            text-decoration: none;
+            border-bottom: 1px dotted #ccc;
+        }
+
+        .toc a:hover {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .section {
+            margin-bottom: 50px;
+            page-break-inside: avoid;
+        }
+
+        .section-title {
+            color: #667eea;
+            font-size: 24px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-icon {
+            margin-right: 10px;
+            font-size: 28px;
+        }
+
+        .endpoint {
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .endpoint-header {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .endpoint-method {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 12px;
+            margin-right: 10px;
+        }
+
+        .get { background: #d4edda; color: #155724; }
+        .post { background: #d1ecf1; color: #0c5460; }
+        .put { background: #fff3cd; color: #856404; }
+
+        .endpoint-path {
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .endpoint-description {
+            margin-top: 10px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .endpoint-body {
+            padding: 20px;
+        }
+
+        .field-group {
+            margin-bottom: 25px;
+        }
+
+        .field-group h4 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 16px;
+            border-left: 3px solid #667eea;
+            padding-left: 10px;
+        }
+
+        .field {
+            margin-bottom: 12px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border-left: 3px solid #28a745;
+        }
+
+        .field.optional {
+            border-left-color: #ffc107;
+        }
+
+        .field.computed {
+            border-left-color: #6c757d;
+        }
+
+        .field-name {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .field-type {
+            color: #6f42c1;
+            font-size: 12px;
+            margin-left: 10px;
+            font-weight: normal;
+        }
+
+        .field-description {
+            margin-top: 5px;
+            color: #666;
+        }
+
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #ffc107;
+            margin: 20px 0;
+        }
+
+        .key-points {
+            background: #d1ecf1;
+            padding: 25px;
+            border-radius: 8px;
+            margin-top: 40px;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .key-points h3 {
+            color: #17a2b8;
+            margin-bottom: 15px;
+        }
+
+        .key-points ul {
+            list-style: none;
+        }
+
+        .key-points li {
+            margin: 8px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .key-points li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .print-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+
+        .print-btn:hover {
+            background: #5a6fd8;
+        }
+
+        @media print {
+            body { background: white; }
+            .document { box-shadow: none; margin: 0; }
+            .print-btn { display: none; }
+            .section { page-break-inside: avoid; }
+        }
+
+        @page {
+            margin: 2cm;
+            size: A4;
+        }
+    </style>
+</head>
+<body>
+    <button class="print-btn" onclick="window.print()">📄 Exporter en PDF</button>
+    
+    <div class="document">
+        <div class="header">
+            <h1>📚 Documentation API</h1>
+            <p>Plateforme de Cours en Ligne - Guide Développeur</p>
+        </div>
+
+        <div class="content">
+            <div class="toc">
+                <h2>📋 Table des Matières</h2>
+                <ul>
+                    <li><a href="#dashboard">📊 Dashboard - Statistiques</a></li>
+                    <li><a href="#users">👥 Gestion des Utilisateurs</a></li>
+                    <li><a href="#teachers">🎓 Gestion des Professeurs</a></li>
+                    <li><a href="#transactions">💳 Gestion des Transactions</a></li>
+                    <li><a href="#utilities">🔧 APIs Utilitaires</a></li>
+                    <li><a href="#errors">❌ Gestion des Erreurs</a></li>
+                    <li><a href="#guidelines">📝 Bonnes Pratiques</a></li>
+                </ul>
+            </div>
+
+            <section id="dashboard" class="section">
+                <h2 class="section-title">
+                    <span class="section-icon">📊</span>
+                    Dashboard - Statistiques
+                </h2>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="endpoint-method get">GET</span>
+                        <span class="endpoint-path">/api/admin/stats</span>
+                        <div class="endpoint-description">
+                            Vue d'ensemble des KPIs de la plateforme pour le tableau de bord administrateur
+                        </div>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="field-group">
+                            <h4>Métriques Principales</h4>
+                            <div class="field computed">
+                                <span class="field-name">totalUsers</span>
+                                <span class="field-type">integer</span>
+                                <div class="field-description">Nombre total d'utilisateurs inscrits</div>
+                            </div>
+                            <div class="field computed">
+                                <span class="field-name">totalTeachers</span>
+                                <span class="field-type">integer</span>
+                                <div class="field-description">Nombre total de professeurs actifs</div>
+                            </div>
+                            <div class="field computed">
+                                <span class="field-name">totalOffers</span>
+                                <span class="field-type">integer</span>
+                                <div class="field-description">Nombre total d'offres de cours publiées</div>
+                            </div>
+                            <div class="field computed">
+                                <span class="field-name">activeOffers</span>
+                                <span class="field-type">integer</span>
+                                <div class="field-description">Offres actuellement en cours</div>
+                            </div>
+                        </div>
+
+                        <div class="field-group">
+                            <h4>Métriques Financières</h4>
+                            <div class="field computed">
+                                <span class="field-name">paidSessions</span>
+                                <span class="field-type">integer</span>
+                                <div class="field-description">Nombre total de séances facturées</div>
+                            </div>
+                            <div class="field computed">
+                                <span class="field-name">globalBalance</span>
+                                <span class="field-type">decimal</span>
+                                <div class="field-description">Montant total circulant sur la plateforme (€)</div>
+                            </div>
+                            <div class="field computed">
+                                <span class="field-name">globalProfit</span>
+                                <span class="field-type">decimal</span>
+                                <div class="field-description">Bénéfice total généré par la commission (€)</div>
+                            </div>
+                        </div>
+
+                        <div class="field-group">
+                            <h4>Indicateurs de Tendances</h4>
+                            <div class="field computed">
+                                <span class="field-name">trends.{metric}.type</span>
+                                <span class="field-type">string</span>
+                                <div class="field-description">Direction de l'évolution : "up" ou "down"</div>
+                            </div>
+                            <div class="field computed">
+                                <span class="field-name">trends.{metric}.value</span>
+                                <span class="field-type">string</span>
+                                <div class="field-description">Pourcentage d'évolution formaté (ex: "+12% ce mois")</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="endpoint-method get">GET</span>
+                        <span class="endpoint-path">/api/admin/charts</span>
+                        <div class="endpoint-description">
+                            Données formatées pour les graphiques du tableau de bord
+                        </div>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="field-group">
+                            <h4>Évolution Mensuelle</h4>
+                            <div class="field computed">
+                                <span class="field-name">monthlyStats[]</span>
+                                <span class="field-type">array</span>
+                                <div class="field-description">Évolution mensuelle des inscriptions et créations d'offres</div>
+                            </div>
+                        </div>
+
+                        <div class="field-group">
+                            <h4>Répartition des Offres</h4>
+                            <div class="field computed">
+                                <span class="field-name">offerStatus[]</span>
+                                <span class="field-type">array</span>
+                                <div class="field-description">Distribution des offres par statut avec couleurs pour graphiques circulaires</div>
+                            </div>
+                        </div>
+
+                        <div class="field-group">
+                            <h4>Revenus</h4>
+                            <div class="field computed">
+                                <span class="field-name">revenueData[]</span>
+                                <span class="field-type">array</span>
+                                <div class="field-description">Revenus mensuels pour graphiques de tendance</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="users" class="section">
+                <h2 class="section-title">
+                    <span class="section-icon">👥</span>
+                    Gestion des Utilisateurs
+                </h2>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="endpoint-method get">GET</span>
+                        <span class="endpoint-path">/api/admin/users</span>
+                        <div class="endpoint-description">
+                            Liste paginée des élèves avec leurs professeurs associés
+                        </div>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="field-group">
+                            <h4>Informations Utilisateur</h4>
+                            <div class="field computed">
+                                <span class="field-name">id</span>
+                                <span class="field-type">integer</span>
+                                <div class="field-description">Identifiant unique auto-généré</div>
+                            </div>
+                            <div class="field">
+                                <span class="field-name">name</span>
+                                <span class="field-type">string</span>
+                                <div class="field-description">Nom complet de l'utilisateur</div>
+                            </div>
+                            <div class="field">
+                                <span class="field-name">email</span>
+                                <span class="field-type">string</span>
+                                <div class="field-description">Adresse email de connexion (unique)</div>
+                            </div>
+                            <div class="field optional">
+                                <span class="field-name">phone</span>
+                                <span class="field-type">string</span>
+                                <div class="field-description">Numéro de téléphone de contact</div>
+                            </div>
+                            <div class="field computed">
+                                <span class="field-name">createdAt</span>
+                                <span class="field-type">datetime</span>
+                                <div class="field-description">Date d'inscription (format ISO 8601)</div>
+                            </div>
+                        </div>
+
+                        <div class="field-group">
+                            <h4>Relations</h4>
+                            <div class="field computed">
+                                <span class="field-name">teachers[]</span>
+                                <span class="field-type">array</span>
+                                <div class="field-description">Liste des professeurs avec qui l'utilisateur a pris des cours</div>
+                            </div>
+                        </div>
+
+                        <div class="field-group">
+                            <h4>Pagination</h4>
+                            <div class="field computed">
+                                <span class="field-name">total</span>
+                                <span class="field-type">integer</span>
+                                <div class="field-description">Nombre total d'utilisateurs (toutes pages confondues)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="endpoint-method post">POST</span>
+                        <span class="endpoint-path">/api/admin/users</span>
+                        <div class="endpoint-description">
+                            Création d'un nouvel utilisateur
+                        </div>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="highlight">
+                            <strong>Champs requis :</strong> name, email<br>
+                            <strong>Contraintes :</strong> email doit être unique
+                        </div>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="endpoint-method put">PUT</span>
+                        <span class="endpoint-path">/api/admin/users/:id</span>
+                        <div class="endpoint-description">
+                            Modification des informations d'un utilisateur existant
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="teachers" class="section">
+                <h2 class="section-title">
+                    <span class="section-icon">🎓</span>
+                    Gestion des Professeurs
+                </h2>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="endpoint-method get">GET</span>
+                        <span class="endpoint-path">/api/admin/teachers</span>
+                        <div class="endpoint-description">
+                            Liste des professeurs avec leurs élèves et informations tarifaires
+                        </div>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="field-group">
+                            <h4>Informations Professeur</h4>
+                            <div class="field">
+                                <span class="field-name">subject</span>
+                                <span class="field-type">string</span>
+                                <div class="field-description">Matière principale enseignée</div>
+                            </div>
+                            <div class="field optional">
+                                <span class="field-name">experience</span>
+                                <span class="field-type">string</span>
+                                <div class="field-description">Années d'expérience (texte libre)</div>
+                            </div>
+                            <div class="field">
+                                <span class="field-name">rate</span>
+                                <span class="field-type">decimal</span>
+                                <div class="field-description">Tarif horaire en euros</div>
+                            </div>
+                        </div>
+
+                        <div class="field-group">
+                            <h4>Relations Élèves</h4>
+                            <div class="field computed">
+                                <span class="field-name">students[]</span>
+                                <span class="field-type">array</span>
+                                <div class="field-description">Liste des élèves actuels avec leur niveau scolaire</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="endpoint-method post">POST</span>
+                        <span class="endpoint-path">/api/admin/teachers</span>
+                        <div class="endpoint-description">
+                            Ajout d'un nouveau professeur à la plateforme
+                        </div>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="highlight">
+                            <strong>Champs requis :</strong> name, email, subject, rate<br>
+                            <strong>Validation :</strong> rate doit être > 0, email unique
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="transactions" class="section">
+                <h2 class="section-title">
+                    <span class="section-icon">💳</span>
+                    Gestion des Transactions
+                </h2>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="endpoint-method get">GET</span>
+                        <span class="endpoint-path">/api/admin/transactions</span>
+                        <div class="endpoint-description">
+                            Historique des paiements avec contrôles de validation et remboursement
+                        </div>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="field-group">
+                            <h4>Détails Transaction</h4>
+                            <div class="field computed">
+                                <span class="field-name">amount</span>
+                                <span class="field-type">decimal</span>
+                                <div class="field-description">Montant facturé à l'élève (€)</div>
+                            </div>
+                            <div class="field computed">
+                                <span class="field-name">status</span>
+                                <span class="field-type">enum</span>
+                                <div class="field-description">État : "pending", "completed", "refunded"</div>
+                            </div>
+                            <div class="field computed">
+                                <span class="field-name">paymentValidated</span>
+                                <span class="field-type">boolean</span>
+                                <div class="field-description">Le professeur a-t-il été payé ?</div>
+                            </div>
+                            <div class="field computed">
+                                <span class="field-name">canRefund</span>
+                                <span class="field-type">boolean</span>
+                                <div class="field-description">La transaction peut-elle être remboursée ?</div>
+                            </div>
+                        </div>
+
+                        <div class="field-group">
+                            <h4>Acteurs</h4>
+                            <div class="field computed">
+                                <span class="field-name">student</span>
+                                <span class="field-type">object</span>
+                                <div class="field-description">Informations de l'élève (id, name, email)</div>
+                            </div>
+                            <div class="field computed">
+                                <span class="field-name">teacher</span>
+                                <span class="field-type">object</span>
+                                <div class="field-description">Informations du professeur (id, name, subject)</div>
+                            </div>
+                        </div>
+
+                        <div class="field-group">
+                            <h4>Résumé Financier</h4>
+                            <div class="field computed">
+                                <span class="field-name">summary.totalAmount</span>
+                                <span class="field-type">decimal</span>
+                                <div class="field-description">Montant cumulé de toutes les transactions</div>
+                            </div>
+                            <div class="field computed">
+                                <span class="field-name">summary.pendingAmount</span>
+                                <span class="field-type">decimal</span>
+                                <div class="field-description">Montant des paiements en attente de validation</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="endpoint-method post">POST</span>
+                        <span class="endpoint-path">/api/admin/transactions/:id/refund</span>
+                        <div class="endpoint-description">
+                            Remboursement d'une transaction (passage au statut "refunded")
+                        </div>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="endpoint-method post">POST</span>
+                        <span class="endpoint-path">/api/admin/transactions/:id/validate-payment</span>
+                        <div class="endpoint-description">
+                            Validation du paiement au professeur (paymentValidated = true)
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="utilities" class="section">
+                <h2 class="section-title">
+                    <span class="section-icon">🔧</span>
+                    APIs Utilitaires
+                </h2>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="endpoint-method get">GET</span>
+                        <span class="endpoint-path">/api/admin/subjects</span>
+                        <div class="endpoint-description">
+                            Liste des matières disponibles pour les formulaires et filtres
+                        </div>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="code-block">
+{
+  "subjects": [
+    "Mathématiques", "Physique", "Chimie", 
+    "Français", "Anglais", "Histoire",
+    "Géographie", "SVT", "Philosophie", "Économie"
+  ]
+}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="errors" class="section">
+                <h2 class="section-title">
+                    <span class="section-icon">❌</span>
+                    Gestion des Erreurs
+                </h2>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="endpoint-method">ALL</span>
+                        <span class="endpoint-path">Format Standard d'Erreur</span>
+                        <div class="endpoint-description">
+                            Structure uniforme pour toutes les réponses d'erreur
+                        </div>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="code-block">
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",      // Type d'erreur technique
+    "message": "Email déjà utilisé", // Message lisible pour l'utilisateur
+    "details": {                     // Détails optionnels
+      "field": "email",              // Champ problématique
+      "value": "test@example.com"    // Valeur rejetée
+    }
+  }
+}
+                        </div>
+
+                        <div class="field-group">
+                            <h4>Codes d'Erreur Courants</h4>
+                            <div class="field">
+                                <span class="field-name">VALIDATION_ERROR</span>
+                                <div class="field-description">Données invalides (email dupliqué, champs manquants)</div>
+                            </div>
+                            <div class="field">
+                                <span class="field-name">NOT_FOUND</span>
+                                <div class="field-description">Ressource inexistante (utilisateur/professeur/transaction)</div>
+                            </div>
+                            <div class="field">
+                                <span class="field-name">SERVER_ERROR</span>
+                                <div class="field-description">Erreur interne du serveur</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="key-points">
+                <h3>📝 Points Clés pour l'Implémentation</h3>
+                <ul>
+                    <li><strong>Consistance des réponses :</strong> Toujours retourner success + data ou success + error</li>
+                    <li><strong>Dates standardisées :</strong> Format ISO 8601 en UTC pour toutes les dates</li>
+                    <li><strong>Relations claires :</strong> Users ↔ Teachers via les arrays students/teachers</li>
+                    <li><strong>Pagination uniforme :</strong> total, page, limit sur tous les endpoints de liste</li>
+                    <li><strong>Contrôle financier :</strong> paymentValidated et canRefund pour la gestion des paiements</li>
+                    <li><strong>Validation stricte :</strong> Emails uniques, montants positifs, champs obligatoires</li>
+                    <li><strong>Workflow transactions :</strong> pending → completed (via validate-payment) ou refunded</li>
+                </ul>
+            </div>
+
+            <section id="guidelines" class="section">
+                <h2 class="section-title">
+                    <span class="section-icon">📋</span>
+                    Architecture des Données
+                </h2>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="endpoint-method">INFO</span>
+                        <span class="endpoint-path">Relations entre Entités</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="code-block">
+USER (Élève)
+├── teachers[] → Liste des professeurs associés
+├── transactions[] → Historique des paiements
+
+TEACHER (Professeur)  
+├── students[] → Liste des élèves actuels
+├── subject → Matière principale
+├── rate → Tarif horaire
+
+TRANSACTION
+├── student → Référence vers l'élève
+├── teacher → Référence vers le professeur
+├── session → Détails de la séance
+├── paymentValidated → Statut du paiement prof
+├── canRefund → Possibilité de remboursement
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        // Navigation fluide pour les ancres
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+            target.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+    });
+});
+
+
+        // Mise en évidence de la section active lors du scroll
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('.section');
+            const navLinks = document.querySelectorAll('.toc a');
+            
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (window.scrollY >= sectionTop - 200) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.style.fontWeight = link.getAttribute('href') === '#' + current ? 'bold' : 'normal';
+                link.style.color = link.getAttribute('href') === '#' + current ? '#667eea' : '#333';
+            });
+        });
+
+        // Fonction d'impression optimisée pour PDF
+        function printToPDF() {
+            window.print();
+        }
+    </script>
+</body>
+</html>

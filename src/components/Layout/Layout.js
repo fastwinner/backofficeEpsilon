@@ -30,9 +30,9 @@ const drawerWidth = 280;
 
 const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
-  { text: 'Utilisateurs', icon: <PeopleIcon />, path: '/users' },
+  { text: 'Élèves', icon: <PeopleIcon />, path: '/users' },
   { text: 'Professeurs', icon: <SchoolIcon />, path: '/teachers' },
-  { text: 'Transactions', icon: <TransactionIcon />, path: '/transactions' },
+  { text: 'Séances', icon: <TransactionIcon />, path: '/transactions' },
 ];
 
 function Layout() {
@@ -115,6 +115,7 @@ function Layout() {
                   fontSize: '0.875rem',
                   fontWeight: 500,
                   fontFamily: '"Inter", sans-serif',
+                  color: 'inherit',
                 }}
               />
             </ListItemButton>

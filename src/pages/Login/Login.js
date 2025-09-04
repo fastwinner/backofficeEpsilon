@@ -11,23 +11,29 @@ import {
   FormControlLabel,
 } from '@mui/material';
 import EpsilonLogo from '../../components/EpsilonLogo';
+import { login as loginRequest } from '../../api/services/auth';
 
 function Login() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('jean.dupont@example.com');
+  const [password, setPassword] = useState('password123');
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Simple mock auth. Replace with API call later.
+    setError('');
     if (!email || !password) {
       setError('Veuillez saisir votre email et votre mot de passe');
       return;
     }
     try {
-      const token = 'mock-token';
+      const data = await loginRequest(email, password);
+      const token = data?.token;
+      if (!token) {
+        setError("Authentification échouée: jeton manquant.");
+        return;
+      }
       if (remember) {
         localStorage.setItem('eps_auth_token', token);
       } else {
@@ -35,7 +41,8 @@ function Login() {
       }
       navigate('/dashboard');
     } catch (err) {
-      setError("Une erreur s'est produite. Veuillez réessayer.");
+      const msg = err?.response?.data?.message || err?.message || "Une erreur s'est produite. Veuillez réessayer.";
+      setError(msg);
     }
   };
 

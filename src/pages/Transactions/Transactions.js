@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -13,6 +13,7 @@ import {
   DialogActions,
   Alert,
   Divider,
+  CircularProgress,
 } from '@mui/material';
 import {
   Payment as PaymentIcon,
@@ -21,61 +22,46 @@ import {
   Person as PersonIcon,
   School as SchoolIcon,
 } from '@mui/icons-material';
-import { DataGrid } from '@mui/x-data-grid';
+import { DataGrid, GridToolbar, frFR } from '@mui/x-data-grid';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { formatFCFA } from '../../utils/currency';
+import { getTransactions, refundTransaction, validatePayment } from '../../api/services/transactions';
 
 function Transactions() {
-  const [transactions, setTransactions] = useState([
-    {
-      id: 1,
-      amount: 75.00,
-      date: '2024-08-20T14:30:00',
-      status: 'completed',
-      student: { id: 1, name: 'Jean Dupont', email: 'jean.dupont@email.com' },
-      teacher: { id: 1, name: 'Marie Martin', subject: 'Mathématiques' },
-      session: { duration: '2h', subject: 'Mathématiques', level: 'Terminale' },
-      paymentValidated: true,
-      canRefund: true,
-    },
-    {
-      id: 2,
-      amount: 60.00,
-      date: '2024-08-19T16:00:00',
-      status: 'pending',
-      student: { id: 2, name: 'Sophie Lambert', email: 'sophie.lambert@email.com' },
-      teacher: { id: 3, name: 'Paul Moreau', subject: 'Français' },
-      session: { duration: '2h', subject: 'Français', level: '2nde' },
-      paymentValidated: false,
-      canRefund: true,
-    },
-    {
-      id: 3,
-      amount: 90.00,
-      date: '2024-08-18T10:15:00',
-      status: 'completed',
-      student: { id: 1, name: 'Jean Dupont', email: 'jean.dupont@email.com' },
-      teacher: { id: 2, name: 'Pierre Durand', subject: 'Physique' },
-      session: { duration: '3h', subject: 'Physique', level: 'Terminale' },
-      paymentValidated: true,
-      canRefund: false,
-    },
-    {
-      id: 4,
-      amount: 50.00,
-      date: '2024-08-17T13:45:00',
-      status: 'refunded',
-      student: { id: 4, name: 'Alice Petit', email: 'alice.petit@email.com' },
-      teacher: { id: 1, name: 'Marie Martin', subject: 'Mathématiques' },
-      session: { duration: '2h', subject: 'Mathématiques', level: '1ère' },
-      paymentValidated: false,
-      canRefund: false,
-    },
-  ]);
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [pagination, setPagination] = useState({ page: 1, total: 0 });
+  const [page, setPage] = useState(0); // DataGrid uses 0-based page index
+  const [pageSize, setPageSize] = useState(25);
+  const [summary, setSummary] = useState({ totalAmount: 0, pendingAmount: 0, refundedAmount: 0 });
 
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [actionDialog, setActionDialog] = useState({ open: false, type: null });
+
+  // Load transactions from API
+  useEffect(() => {
+    loadTransactions(page, pageSize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, pageSize]);
+
+  const loadTransactions = async (pageZeroBased = 0, size = pageSize) => {
+    try {
+      setLoading(true);
+      setError('');
+      const apiPage = pageZeroBased + 1; // backend expects 1-based page
+      const data = await getTransactions(apiPage, size);
+      setTransactions(data.transactions || []);
+      setPagination({ page: apiPage, total: data.total || 0 });
+      setSummary(data.summary || { totalAmount: 0, pendingAmount: 0, refundedAmount: 0 });
+    } catch (err) {
+      setError(err?.response?.data?.message || err?.message || 'Erreur de chargement des transactions');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -145,22 +131,7 @@ function Transactions() {
         />
       ),
     },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      width: 200,
-      renderCell: (params) => (
-        <Box>
-          <Button
-            size="small"
-            onClick={() => handleViewDetails(params.row)}
-            sx={{ mr: 1 }}
-          >
-            Détails
-          </Button>
-        </Box>
-      ),
-    },
+    
   ];
 
   const handleViewDetails = (transaction) => {
@@ -179,57 +150,82 @@ function Transactions() {
     setActionDialog({ open: true, type: 'validate' });
   };
 
-  const handleConfirmAction = () => {
-    if (actionDialog.type === 'refund') {
-      // Effectuer le remboursement
-      setTransactions(transactions.map(t => 
-        t.id === selectedTransaction.id 
-          ? { ...t, status: 'refunded', canRefund: false }
-          : t
-      ));
-    } else if (actionDialog.type === 'validate') {
-      // Valider le paiement
-      setTransactions(transactions.map(t => 
-        t.id === selectedTransaction.id 
-          ? { ...t, paymentValidated: true }
-          : t
-      ));
+  const handleConfirmAction = async () => {
+    if (!selectedTransaction) return;
+
+    try {
+      setSubmitting(true);
+      setError('');
+      
+      if (actionDialog.type === 'refund') {
+        const response = await refundTransaction(selectedTransaction.id);
+        if (response.success) {
+          await loadTransactions(pagination.page);
+        }
+      } else if (actionDialog.type === 'validate') {
+        const response = await validatePayment(selectedTransaction.id);
+        if (response.success) {
+          await loadTransactions(pagination.page);
+        }
+      }
+      setActionDialog({ open: false, type: null });
+    } catch (err) {
+      setError(err?.response?.data?.message || err?.message || 'Erreur lors de l\'action');
+    } finally {
+      setSubmitting(false);
     }
-    setActionDialog({ open: false, type: null });
   };
 
   const handleCancelAction = () => {
     setActionDialog({ open: false, type: null });
   };
 
-  const totalAmount = transactions
-    .filter(t => t.status === 'completed')
-    .reduce((sum, t) => sum + t.amount, 0);
+  // Use summary from API instead of calculating locally
+  const completedCount = transactions.filter(t => t.status === 'completed').length;
+  const pendingCount = transactions.filter(t => t.status === 'pending').length;
+  const refundedCount = transactions.filter(t => t.status === 'refunded').length;
 
-  const pendingAmount = transactions
-    .filter(t => t.status === 'pending')
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const refundedAmount = transactions
-    .filter(t => t.status === 'refunded')
-    .reduce((sum, t) => sum + t.amount, 0);
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+        <CircularProgress />
+        <Typography sx={{ ml: 2 }}>Chargement des transactions...</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
-        Historique des Transactions
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 4 }}>
+        <Box>
+          <Typography variant="h4" sx={{ fontWeight: 600, color: 'text.primary', mb: 1 }}>
+            Transactions
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Gérez les transactions et paiements ({pagination.total} total)
+          </Typography>
+        </Box>
+      </Box>
 
-      {/* Statistiques des transactions */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
+
+      {/* Statistiques des séances */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} md={3}>
           <Card>
             <CardContent>
               <Typography color="textSecondary" gutterBottom>
-                Total des transactions
+                Séances terminées
               </Typography>
               <Typography variant="h5" color="success.main">
-                {formatFCFA(totalAmount)}
+                {completedCount}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {formatFCFA(summary.totalAmount)}
               </Typography>
             </CardContent>
           </Card>
@@ -241,7 +237,10 @@ function Transactions() {
                 En attente
               </Typography>
               <Typography variant="h5" color="warning.main">
-                {formatFCFA(pendingAmount)}
+                {pendingCount}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {formatFCFA(summary.pendingAmount)}
               </Typography>
             </CardContent>
           </Card>
@@ -253,7 +252,10 @@ function Transactions() {
                 Remboursements
               </Typography>
               <Typography variant="h5" color="error.main">
-                {formatFCFA(refundedAmount)}
+                {refundedCount}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {formatFCFA(summary.refundedAmount)}
               </Typography>
             </CardContent>
           </Card>
@@ -265,21 +267,67 @@ function Transactions() {
                 Nombre total
               </Typography>
               <Typography variant="h5">
-                {transactions.length}
+                {pagination.total}
               </Typography>
             </CardContent>
           </Card>
         </Grid>
       </Grid>
 
-      {/* Tableau des transactions */}
-      <Box sx={{ height: 600, width: '100%' }}>
+      {/* Tableau des séances */}
+      <Box sx={{ 
+        height: 600, 
+        width: '100%',
+        '& .MuiDataGrid-toolbarContainer': {
+          p: 1,
+          gap: 1,
+          borderBottom: '1px solid #e2e8f0',
+          backgroundColor: '#f8fafc',
+        },
+        '& .MuiDataGrid-root': {
+          border: '1px solid #e2e8f0',
+          borderRadius: 3,
+        },
+        '& .MuiDataGrid-columnHeaders': {
+          backgroundColor: '#f8fafc',
+          borderBottom: '1px solid #e2e8f0',
+        },
+        '& .MuiDataGrid-cell': {
+          borderBottom: '1px solid #f1f5f9',
+        },
+        '& .MuiDataGrid-row:hover': {
+          cursor: 'pointer',
+          backgroundColor: '#F9FAFB',
+        },
+      }}>
         <DataGrid
           rows={transactions}
           columns={columns}
-          pageSize={10}
-          rowsPerPageOptions={[10, 25, 50]}
+          paginationMode="server"
+          rowCount={pagination.total}
+          page={page}
+          onPageChange={(newPage) => {
+            setPage(newPage);
+            loadTransactions(newPage, pageSize);
+          }}
+          pageSize={pageSize}
+          onPageSizeChange={(newSize) => {
+            setPageSize(newSize);
+            setPage(0);
+            loadTransactions(0, newSize);
+          }}
+          rowsPerPageOptions={[10, 25, 50, 100]}
           disableSelectionOnClick
+          localeText={frFR.components.MuiDataGrid.defaultProps.localeText}
+          components={{ Toolbar: GridToolbar }}
+          componentsProps={{
+            toolbar: {
+              showQuickFilter: true,
+              quickFilterProps: { debounceMs: 300, placeholder: 'Rechercher…' },
+            },
+          }}
+          sortingOrder={["asc", "desc"]}
+          onRowClick={(params) => handleViewDetails(params.row)}
         />
       </Box>
 
@@ -293,7 +341,7 @@ function Transactions() {
         {selectedTransaction && (
           <>
             <DialogTitle>
-              Détails de la Transaction #{selectedTransaction.id}
+              Détails de la Séance #{selectedTransaction.id}
             </DialogTitle>
             <DialogContent>
               <Grid container spacing={3}>
@@ -401,7 +449,7 @@ function Transactions() {
 
               {selectedTransaction.status === 'refunded' && (
                 <Alert severity="info" sx={{ mt: 2 }}>
-                  Cette transaction a été remboursée et ne peut plus être modifiée.
+                  Cette séance a été remboursée et ne peut plus être modifiée.
                 </Alert>
               )}
             </DialogContent>
@@ -420,12 +468,12 @@ function Transactions() {
         <DialogContent>
           {actionDialog.type === 'refund' ? (
             <Typography>
-              Êtes-vous sûr de vouloir rembourser cette transaction ? 
+              Êtes-vous sûr de vouloir rembourser cette séance ? 
               Le montant de {formatFCFA(selectedTransaction?.amount)} sera retourné au client.
             </Typography>
           ) : (
             <Typography>
-              Êtes-vous sûr de vouloir valider le paiement du professeur ? 
+              Êtes-vous sûr de vouloir valider le paiement du professeur pour cette séance ? 
               Le montant de {formatFCFA(selectedTransaction?.amount)} sera versé au professeur.
             </Typography>
           )}
@@ -436,8 +484,9 @@ function Transactions() {
             onClick={handleConfirmAction} 
             variant="contained"
             color={actionDialog.type === 'refund' ? 'error' : 'success'}
+            disabled={submitting}
           >
-            Confirmer
+            {submitting ? <CircularProgress size={20} /> : 'Confirmer'}
           </Button>
         </DialogActions>
       </Dialog>

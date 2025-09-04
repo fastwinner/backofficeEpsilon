@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Grid,
@@ -32,43 +32,70 @@ import {
   TrendingUp as TrendingUpIcon,
 } from '@mui/icons-material';
 import StatCard from '../../components/StatCard/StatCard';
+import { getDashboardStats } from '../../api/services/dashboard';
 
 
 function Dashboard() {
-  const [stats] = useState({
-    totalUsers: 1250,
-    totalTeachers: 89,
-    totalOffers: 456,
-    activeOffers: 123,
-    completedOffers: 288,
-    paidSessions: 2145,
-    globalBalance: 45670.50,
-    globalProfit: 12890.25,
-  });
+  const [stats, setStats] = useState(null);
+  const [chartData, setChartData] = useState({ monthlyStats: [], offerStatus: [], revenueData: [] });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const [chartData] = useState({
-    monthlyStats: [
-      { month: 'Jan', users: 100, teachers: 8, offers: 45 },
-      { month: 'Fév', users: 120, teachers: 12, offers: 52 },
-      { month: 'Mar', users: 140, teachers: 15, offers: 48 },
-      { month: 'Avr', users: 180, teachers: 18, offers: 65 },
-      { month: 'Mai', users: 220, teachers: 22, offers: 78 },
-      { month: 'Juin', users: 250, teachers: 25, offers: 85 },
-    ],
-    offerStatus: [
-      { name: 'En cours', value: 123, color: '#FAB73C' },
-      { name: 'Terminées', value: 288, color: '#0B442D' },
-      { name: 'Annulées', value: 45, color: '#EC681C' },
-    ],
-    revenueData: [
-      { month: 'Jan', revenue: 3500 },
-      { month: 'Fév', revenue: 4200 },
-      { month: 'Mar', revenue: 3800 },
-      { month: 'Avr', revenue: 5100 },
-      { month: 'Mai', revenue: 6200 },
-      { month: 'Juin', revenue: 7800 },
-    ],
-  });
+  useEffect(() => {
+    let mounted = true;
+    async function load() {
+      setLoading(true);
+      setError('');
+      try {
+        const data = await getDashboardStats();
+        if (!mounted) return;
+        setStats({
+          totalUsers: data?.totalUsers ?? 0,
+          totalTeachers: data?.totalTeachers ?? 0,
+          totalOffers: data?.totalOffers ?? 0,
+          activeOffers: data?.activeOffers ?? 0,
+          completedOffers: data?.completedOffers ?? 0,
+          paidSessions: data?.paidSessions ?? 0,
+          globalBalance: data?.globalBalance ?? 0,
+          globalProfit: data?.globalProfit ?? 0,
+          trends: data?.trends ?? {},
+        });
+        setChartData({
+          monthlyStats: Array.isArray(data?.monthlyStats) ? data.monthlyStats : [],
+          offerStatus: Array.isArray(data?.offerStatus) ? data.offerStatus : [],
+          revenueData: Array.isArray(data?.revenueData) ? data.revenueData : [],
+        });
+      } catch (err) {
+        if (!mounted) return;
+        const msg = err?.response?.data?.message || err?.message || 'Erreur de chargement du tableau de bord';
+        setError(msg);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+    load();
+    return () => { mounted = false; };
+  }, []);
+
+  if (loading) {
+    return (
+      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', p: 2 }}>
+        <Typography variant="h6">Chargement du tableau de bord…</Typography>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', p: 2 }}>
+        <Typography variant="h6" color="error">{error}</Typography>
+      </Box>
+    );
+  }
+
+  if (!stats) {
+    return null;
+  }
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
@@ -83,14 +110,14 @@ function Dashboard() {
       </Box>
       
       {/* Statistiques principales */}
-      <Grid container spacing={4} sx={{ mb: 8 }}>
+      <Grid container spacing={2} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} lg={3}>
           <StatCard
-            title="Utilisateurs totaux"
+            title="Élèves totaux"
             value={stats.totalUsers.toLocaleString()}
             icon={<PeopleIcon />}
             color="#0B442D"
-            trend={{ type: 'up', value: '+12%' }}
+            trend={stats.trends?.users}
           />
         </Grid>
         <Grid item xs={12} sm={6} lg={3}>
@@ -99,7 +126,7 @@ function Dashboard() {
             value={stats.totalTeachers}
             icon={<SchoolIcon />}
             color="#2D6B4F"
-            trend={{ type: 'up', value: '+5%' }}
+            trend={stats.trends?.teachers}
           />
         </Grid>
         <Grid item xs={12} sm={6} lg={3}>
@@ -108,7 +135,7 @@ function Dashboard() {
             value={stats.totalOffers}
             icon={<AssignmentIcon />}
             color="#FAB73C"
-            trend={{ type: 'down', value: '-2%' }}
+            trend={stats.trends?.offers}
           />
         </Grid>
         <Grid item xs={12} sm={6} lg={3}>
@@ -117,20 +144,20 @@ function Dashboard() {
             value={stats.activeOffers}
             icon={<TrendingUpIcon />}
             color="#EC681C"
-            trend={{ type: 'up', value: '+8%' }}
+            trend={stats.trends?.offers}
           />
         </Grid>
       </Grid>
 
       {/* Statistiques secondaires */}
-      <Grid container spacing={4} sx={{ mb: 8 }}>
+      <Grid container spacing={2} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} lg={3}>
           <StatCard
             title="Séances payées"
             value={stats.paidSessions.toLocaleString()}
             icon={<PaymentIcon />}
             color="#4A8B6B"
-            trend={{ type: 'up', value: '+22% ce mois' }}
+            trend={stats.trends?.sessions}
           />
         </Grid>
       </Grid>
@@ -143,7 +170,7 @@ function Dashboard() {
             value={`${stats.globalBalance.toLocaleString('fr-FR')} FCFA`}
             icon={<BalanceIcon />}
             color="#EC681C"
-            trend={{ type: 'up', value: '+18% ce mois' }}
+            trend={stats.trends?.balance}
           />
         </Grid>
         <Grid item xs={12} md={6}>
@@ -152,7 +179,7 @@ function Dashboard() {
             value={`${stats.globalProfit.toLocaleString('fr-FR')} FCFA`}
             icon={<TrendingUpIcon />}
             color="#FAB73C"
-            trend={{ type: 'up', value: '+25% ce mois' }}
+            trend={stats.trends?.profit}
           />
         </Grid>
       </Grid>
@@ -195,7 +222,7 @@ function Dashboard() {
                       boxShadow: '0 4px 6px -1px rgba(11, 68, 45, 0.1)'
                     }}
                   />
-                  <Bar dataKey="users" fill="#0B442D" name="Utilisateurs" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="users" fill="#0B442D" name="Élèves" radius={[6, 6, 0, 0]} />
                   <Bar dataKey="teachers" fill="#2D6B4F" name="Professeurs" radius={[6, 6, 0, 0]} />
                   <Bar dataKey="offers" fill="#FAB73C" name="Offres" radius={[6, 6, 0, 0]} />
                 </BarChart>

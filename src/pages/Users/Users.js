@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -10,58 +10,53 @@ import {
   TextField,
   IconButton,
   Chip,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material';
-import { DataGrid } from '@mui/x-data-grid';
+import { DataGrid, GridToolbar, frFR } from '@mui/x-data-grid';
+import { getUsers, createUser, updateUser, deleteUser } from '../../api/services/users';
 
 function Users() {
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      name: 'Jean Dupont',
-      email: 'jean.dupont@email.com',
-      phone: '0123456789',
-      createdAt: '2024-01-15',
-      teachers: [
-        { id: 1, name: 'Marie Martin', subject: 'Mathématiques' },
-        { id: 2, name: 'Pierre Durand', subject: 'Physique' },
-      ],
-    },
-    {
-      id: 2,
-      name: 'Sophie Lambert',
-      email: 'sophie.lambert@email.com',
-      phone: '0987654321',
-      createdAt: '2024-02-20',
-      teachers: [
-        { id: 3, name: 'Paul Moreau', subject: 'Français' },
-      ],
-    },
-    {
-      id: 3,
-      name: 'Michel Bernard',
-      email: 'michel.bernard@email.com',
-      phone: '0147258369',
-      createdAt: '2024-03-10',
-      teachers: [],
-    },
-  ]);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [pagination, setPagination] = useState({ page: 1, total: 0 });
 
   const [open, setOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
   });
+
+  // Load users from API
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const loadUsers = async (page = 1) => {
+    try {
+      setLoading(true);
+      setError('');
+      const data = await getUsers(page, 10);
+      // API returns { students: [...], total }
+      setUsers(data.students || []);
+      setPagination({ page, total: data.total || 0 });
+    } catch (err) {
+      setError(err?.response?.data?.message || err?.message || 'Erreur de chargement des utilisateurs');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const columns = [
     { field: 'id', headerName: 'ID', width: 70 },
@@ -128,30 +123,48 @@ function Users() {
     setFormData({ name: '', email: '', phone: '' });
   };
 
-  const handleSubmit = () => {
-    if (editingUser) {
-      // Modifier utilisateur existant
-      setUsers(users.map(user => 
-        user.id === editingUser.id 
-          ? { ...user, ...formData }
-          : user
-      ));
-    } else {
-      // Ajouter nouvel utilisateur
-      const newUser = {
-        id: Math.max(...users.map(u => u.id)) + 1,
-        ...formData,
-        createdAt: new Date().toISOString().split('T')[0],
-        teachers: [],
-      };
-      setUsers([...users, newUser]);
+  const handleSubmit = async () => {
+    if (!formData.name || !formData.email || !formData.phone) {
+      setError('Tous les champs sont requis');
+      return;
     }
-    handleClose();
+
+    try {
+      setSubmitting(true);
+      setError('');
+      
+      if (editingUser) {
+        // Modifier élève existant
+        const response = await updateUser(editingUser.id, formData);
+        if (response.success) {
+          await loadUsers(pagination.page); // Reload current page
+        }
+      } else {
+        // Ajouter nouvel élève
+        const response = await createUser(formData);
+        if (response.success) {
+          await loadUsers(1); // Go to first page to see new user
+        }
+      }
+      handleClose();
+    } catch (err) {
+      setError(err?.response?.data?.message || err?.message || 'Erreur lors de la sauvegarde');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleDelete = (userId) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
-      setUsers(users.filter(user => user.id !== userId));
+  const handleDelete = async (userId) => {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer cet élève ?')) {
+      try {
+        setError('');
+        const response = await deleteUser(userId);
+        if (response.success) {
+          await loadUsers(pagination.page);
+        }
+      } catch (err) {
+        setError(err?.response?.data?.message || err?.message || 'Erreur lors de la suppression');
+      }
     }
   };
 
@@ -162,15 +175,35 @@ function Users() {
     });
   };
 
+  // Détails élève via clic sur le tableau
+  const openUserDetails = (user) => {
+    setSelectedUser(user);
+    setDetailOpen(true);
+  };
+
+  const closeUserDetails = () => {
+    setDetailOpen(false);
+    setSelectedUser(null);
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+        <CircularProgress />
+        <Typography sx={{ ml: 2 }}>Chargement des élèves...</Typography>
+      </Box>
+    );
+  }
+
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 4 }}>
         <Box>
           <Typography variant="h4" sx={{ fontWeight: 600, color: 'text.primary', mb: 1 }}>
-            Utilisateurs
+            Élèves
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            Gérez les comptes utilisateurs et leurs professeurs associés
+            Gérez les comptes élèves et leurs professeurs associés ({pagination.total} total)
           </Typography>
         </Box>
         <Button
@@ -178,115 +211,33 @@ function Users() {
           startIcon={<AddIcon />}
           onClick={handleOpen}
           sx={{ 
-            borderRadius: 2,
             px: 3,
             py: 1.5,
             fontWeight: 500,
           }}
         >
-          Ajouter un utilisateur
+          Ajouter un élève
         </Button>
       </Box>
 
-      {/* Liste des utilisateurs avec leurs professeurs */}
-      <Box sx={{ mb: 4 }}>
-        {users.map((user) => (
-          <Accordion 
-            key={user.id} 
-            sx={{ 
-              mb: 2,
-              '&:before': { display: 'none' },
-              boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
-              border: '1px solid #e2e8f0',
-              borderRadius: '12px !important',
-              '&.Mui-expanded': {
-                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-              }
-            }}
-          >
-            <AccordionSummary 
-              expandIcon={<ExpandMoreIcon />}
-              sx={{ 
-                px: 3,
-                py: 2,
-                '& .MuiAccordionSummary-content': {
-                  alignItems: 'center',
-                }
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>{user.name}</Typography>
-                <Typography variant="body2" color="text.secondary">({user.email})</Typography>
-                <Chip 
-                  label={`${user.teachers.length} prof(s)`}
-                  size="small"
-                  color={user.teachers.length > 0 ? 'primary' : 'default'}
-                  sx={{ borderRadius: 1.5 }}
-                />
-              </Box>
-            </AccordionSummary>
-            <AccordionDetails sx={{ px: 3, pt: 0, pb: 3 }}>
-              <Box>
-                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3, mb: 3 }}>
-                  <Box>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1, color: 'text.primary' }}>
-                      Informations personnelles
-                    </Typography>
-                    <Typography variant="body2" sx={{ mb: 0.5 }}>📞 {user.phone}</Typography>
-                    <Typography variant="body2">📅 Créé le {user.createdAt}</Typography>
-                  </Box>
-                  
-                  {user.teachers.length > 0 && (
-                    <Box>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1, color: 'text.primary' }}>
-                        Professeurs associés
-                      </Typography>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                        {user.teachers.map((teacher) => (
-                          <Chip
-                            key={teacher.id}
-                            label={`${teacher.name} - ${teacher.subject}`}
-                            variant="outlined"
-                            size="small"
-                            sx={{ borderRadius: 1.5 }}
-                          />
-                        ))}
-                      </Box>
-                    </Box>
-                  )}
-                </Box>
-                
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    startIcon={<EditIcon />}
-                    onClick={() => handleEdit(user)}
-                    sx={{ borderRadius: 2 }}
-                  >
-                    Modifier
-                  </Button>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    color="error"
-                    startIcon={<DeleteIcon />}
-                    onClick={() => handleDelete(user.id)}
-                    sx={{ borderRadius: 2 }}
-                  >
-                    Supprimer
-                  </Button>
-                </Box>
-              </Box>
-            </AccordionDetails>
-          </Accordion>
-        ))}
-      </Box>
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
+
+      {/* Section cartes dépliables retirée - les détails sont accessibles via clic sur le tableau */}
 
       {/* Tableau de données */}
       <Box sx={{ 
         height: 400, 
         width: '100%',
+        '& .MuiDataGrid-toolbarContainer': {
+          p: 1,
+          gap: 1,
+          borderBottom: '1px solid #e2e8f0',
+          backgroundColor: '#f8fafc',
+        },
         '& .MuiDataGrid-root': {
           border: '1px solid #e2e8f0',
           borderRadius: 3,
@@ -298,6 +249,10 @@ function Users() {
         '& .MuiDataGrid-cell': {
           borderBottom: '1px solid #f1f5f9',
         },
+        '& .MuiDataGrid-row:hover': {
+          cursor: 'pointer',
+          backgroundColor: '#F9FAFB',
+        },
       }}>
         <DataGrid
           rows={users}
@@ -305,10 +260,20 @@ function Users() {
           pageSize={10}
           rowsPerPageOptions={[10]}
           disableSelectionOnClick
+          localeText={frFR.components.MuiDataGrid.defaultProps.localeText}
+          components={{ Toolbar: GridToolbar }}
+          componentsProps={{
+            toolbar: {
+              showQuickFilter: true,
+              quickFilterProps: { debounceMs: 300, placeholder: 'Rechercher…' },
+            },
+          }}
+          sortingOrder={["asc", "desc"]}
+          onRowClick={(params) => openUserDetails(params.row)}
         />
       </Box>
 
-      {/* Dialog pour ajouter/modifier un utilisateur */}
+      {/* Dialog pour ajouter/modifier un élève */}
       <Dialog 
         open={open} 
         onClose={handleClose} 
@@ -323,7 +288,7 @@ function Users() {
       >
         <DialogTitle sx={{ pb: 1 }}>
           <Typography variant="h5" sx={{ fontWeight: 600 }}>
-            {editingUser ? 'Modifier l\'utilisateur' : 'Ajouter un utilisateur'}
+            {editingUser ? 'Modifier l\'élève' : 'Ajouter un élève'}
           </Typography>
         </DialogTitle>
         <DialogContent sx={{ pt: 2 }}>
@@ -366,10 +331,70 @@ function Users() {
           <Button 
             onClick={handleSubmit} 
             variant="contained"
+            disabled={submitting}
             sx={{ borderRadius: 2, px: 3 }}
           >
-            {editingUser ? 'Modifier' : 'Ajouter'}
+            {submitting ? <CircularProgress size={20} /> : (editingUser ? 'Modifier' : 'Ajouter')}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog Détails élève */}
+      <Dialog 
+        open={detailOpen} 
+        onClose={closeUserDetails} 
+        maxWidth="sm" 
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 10px 10px -5px rgb(0 0 0 / 0.04)',
+          }
+        }}
+      >
+        <DialogTitle sx={{ pb: 1 }}>
+          <Typography variant="h5" sx={{ fontWeight: 600 }}>
+            Détails élève
+          </Typography>
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          {selectedUser && (
+            <Box>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1, color: 'text.primary' }}>
+                {selectedUser.name} ({selectedUser.email})
+              </Typography>
+              <Typography variant="body2" sx={{ mb: 0.5 }}>📞 {selectedUser.phone}</Typography>
+              <Typography variant="body2" sx={{ mb: 2 }}>📅 Créé le {selectedUser.createdAt}</Typography>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1, color: 'text.primary' }}>
+                Professeurs associés
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                {selectedUser.teachers && selectedUser.teachers.length > 0 ? (
+                  selectedUser.teachers.map((teacher) => (
+                    <Chip
+                      key={teacher.id}
+                      label={`${teacher.name} - ${teacher.subject}`}
+                      variant="outlined"
+                      size="small"
+                      sx={{ borderRadius: 1.5 }}
+                    />
+                  ))
+                ) : (
+                  <Typography variant="body2" color="text.secondary">Aucun professeur associé</Typography>
+                )}
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button onClick={closeUserDetails} sx={{ borderRadius: 2 }}>
+            Fermer
+          </Button>
+          {selectedUser && (
+            <Button onClick={() => { closeUserDetails(); handleEdit(selectedUser); }} variant="contained" sx={{ borderRadius: 2, px: 3 }}>
+              Modifier
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
     </Box>

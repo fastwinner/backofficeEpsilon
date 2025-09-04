@@ -24,8 +24,8 @@ function StatCard({ title, value, icon, color, trend }) {
         },
       }}
     >
-      <CardContent sx={{ p: 3, pt: 4 }}>
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 3 }}>
+      <CardContent sx={{ p: 2, pt: 2.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
           <Box sx={{ flex: 1 }}>
             <Typography 
               variant="caption" 
@@ -44,8 +44,8 @@ function StatCard({ title, value, icon, color, trend }) {
             <Typography 
               variant="h4" 
               sx={{ 
-                fontWeight: 800,
-                fontSize: '2.25rem',
+                fontWeight: 600,
+                fontSize: '2rem',
                 lineHeight: 1.1,
                 color: '#111827',
                 mb: 1,
