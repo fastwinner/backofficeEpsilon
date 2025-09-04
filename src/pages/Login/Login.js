@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -19,6 +19,12 @@ function Login() {
   const [password, setPassword] = useState('password123');
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState('');
+
+  // Force pre-fill after mount to avoid browser password manager overriding initial values
+  useEffect(() => {
+    setEmail('jean.dupont@example.com');
+    setPassword('password123');
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -77,6 +83,7 @@ function Login() {
               label="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              autoComplete="username"
               required
               fullWidth
               sx={{
@@ -93,6 +100,7 @@ function Login() {
               label="Mot de passe"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
               required
               fullWidth
               sx={{

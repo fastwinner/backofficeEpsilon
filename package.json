@@ -26,7 +26,8 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "deploy": "npm run build && surge build epsilon-admin-backoffice.surge.sh"
+    "deploy": "npm run build && surge build epsilon-admin-backoffice.surge.sh",
+    "auto:git": "powershell -ExecutionPolicy Bypass -File ./scripts/auto-commit.ps1"
   },
   "devDependencies": {
     "surge": "^0.23.1"
@@ -49,4 +50,6 @@
       "last 1 safari version"
     ]
   }
+  ,
+  "proxy": "http://35.180.125.36"
 }
