@@ -23,12 +23,12 @@ import {
   Legend,
 } from 'recharts';
 import {
-  PeopleIcon,
-  SchoolIcon,
-  LocalOfferIcon,
-  EventIcon,
-  AccountBalanceWalletIcon,
-  TrendingUpIcon
+  People as PeopleIcon,
+  School as SchoolIcon,
+  LocalOffer as LocalOfferIcon,
+  Event as EventIcon,
+  AccountBalanceWallet as AccountBalanceWalletIcon,
+  TrendingUp as TrendingUpIcon
 } from '@mui/icons-material';
 import StatCard from '../../components/StatCard/StatCard';
 import { getDashboardStats } from '../../api/services/dashboard';
