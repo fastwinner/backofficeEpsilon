@@ -25,9 +25,6 @@ import {
 import {
   People as PeopleIcon,
   School as SchoolIcon,
-  LocalOffer as LocalOfferIcon,
-  Event as EventIcon,
-  AccountBalanceWallet as AccountBalanceWalletIcon,
   TrendingUp as TrendingUpIcon,
   Assignment as AssignmentIcon,
   Payment as PaymentIcon,
