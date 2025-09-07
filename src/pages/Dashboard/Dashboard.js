@@ -28,7 +28,10 @@ import {
   LocalOffer as LocalOfferIcon,
   Event as EventIcon,
   AccountBalanceWallet as AccountBalanceWalletIcon,
-  TrendingUp as TrendingUpIcon
+  TrendingUp as TrendingUpIcon,
+  Assignment as AssignmentIcon,
+  Payment as PaymentIcon,
+  AccountBalance as BalanceIcon
 } from '@mui/icons-material';
 import StatCard from '../../components/StatCard/StatCard';
 import { getDashboardStats } from '../../api/services/dashboard';
